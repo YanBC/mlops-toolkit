@@ -51,7 +51,7 @@ def load_engine(engine_file_path: str) -> trt.ICudaEngine:
 
 def get_engine_info(engine: trt.ICudaEngine) -> str:
     name = engine.name
-    max_batch_size = engine.max_batch_size
+    # max_batch_size = engine.max_batch_size    # DEPRECATED
     num_bindings = engine.num_bindings
     bindings = get_binding_info(engine)
     engine_size = engine.device_memory_size
@@ -96,7 +96,7 @@ def get_engine_info(engine: trt.ICudaEngine) -> str:
         ret_str += f"    profile #{idx}\n"
         for input_name in p:
             ret_str += f"        {p[input_name]}\n"
-    ret_str += f"Max batch size: {max_batch_size}\n"
+    # ret_str += f"Max batch size: {max_batch_size}\n"  # DEPRECATED
     ret_str += f"Memory footprints:\n"
     ret_str += f"    Device memory: {device_mem_size/2**20:.2f} MiB\n"
     # ret_str += f"        Engine: {engine_size/2**20:.2f} MiB\n"
