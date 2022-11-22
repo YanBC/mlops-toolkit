@@ -1,4 +1,3 @@
-import sys
 import argparse
 import onnx
 import onnx_graphsurgeon as gs
@@ -16,10 +15,10 @@ def save_ModelProto(path: str, model: onnx.ModelProto) -> None:
     onnx.save(model, path)
 
 
-def prune_onnx(src_path, des_path):
-    graph = gs.import_onnx(onnx.load(src_path))
+def prune_ModelProto(model: onnx.ModelProto) -> onnx.ModelProto:
+    graph = gs.import_onnx(model)
     graph.cleanup().toposort().fold_constants().cleanup()
-    onnx.save_model(gs.export_onnx(graph), des_path)
+    return gs.export_onnx(graph)
 
 
 def shape_ModelProto(model: onnx.ModelProto):

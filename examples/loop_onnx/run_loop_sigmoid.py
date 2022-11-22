@@ -6,7 +6,10 @@ onnx_model_path = "loop_sigmoid.onnx"
 so = onnxruntime.SessionOptions()
 so.log_severity_level = 3
 
-sess = onnxruntime.InferenceSession(onnx_model_path, so)
+with open(onnx_model_path, 'rb') as f:
+    model_bytes = f.read()
+sess = onnxruntime.InferenceSession(model_bytes, so)
+# sess = onnxruntime.InferenceSession(onnx_model_path, so)
 
 # model specific
 np_input = np.array([1.2], dtype=np.float32).reshape((1, 1))
