@@ -31,7 +31,7 @@ def prune_ModelProto(model: onnx.ModelProto) -> onnx.ModelProto:
     return gs.export_onnx(gs_graph)
 
 
-def create_model(name, nodes, inputs, outputs, initializers) -> onnx.ModelProto:
+def create_model(name, nodes, inputs, outputs, initializers, opset_num) -> onnx.ModelProto:
     new_graph = onnx.helper.make_graph(
             nodes=nodes,
             name=name,
@@ -40,7 +40,7 @@ def create_model(name, nodes, inputs, outputs, initializers) -> onnx.ModelProto:
             initializer=initializers
     )
     new_model = onnx.helper.make_model(new_graph)
-    new_model.opset_import[0].version = 11
+    new_model.opset_import[0].version = opset_num
 
     new_model = prune_ModelProto(new_model)
     new_model = onnx.shape_inference.infer_shapes(new_model)
@@ -70,8 +70,9 @@ def modify_output(model: onnx.ModelProto) -> onnx.ModelProto:
     initializers = graph.initializer
     inputVIs = graph.input
     outputVIs = [new_output]
+    opset = model.opset_import[0].version
 
-    new_model = create_model("Modified", nodes, inputVIs, outputVIs, initializers)
+    new_model = create_model("Modified", nodes, inputVIs, outputVIs, initializers, opset)
     return new_model
 
 
@@ -86,13 +87,28 @@ def modify_node(model: onnx.ModelProto) -> onnx.ModelProto:
     initializers = graph.initializer
     inputVIs = graph.input
     outputVIs = graph.output
+    opset = model.opset_import[0].version
 
     target_tensor_name = "onnx::Resize_1938"
     target_node = [n for n in nodes if target_tensor_name in n.input][0]
     target_node.input.pop()
     target_node.input.append("onnx::Resize_1937")
 
-    new_model = create_model(name, nodes, inputVIs, outputVIs, initializers)
+    new_model = create_model(name, nodes, inputVIs, outputVIs, initializers, opset)
+    return new_model
+
+
+def modify_opset(model: onnx.ModelProto) -> onnx.ModelProto:
+    graph = model.graph
+
+    name = graph.name
+    nodes = graph.node
+    initializers = graph.initializer
+    inputVIs = graph.input
+    outputVIs = graph.output
+    opset = 11
+
+    new_model = create_model(name, nodes, inputVIs, outputVIs, initializers, opset)
     return new_model
 
 
@@ -106,11 +122,12 @@ if __name__ == "__main__":
     args = get_args()
     onnx_path = args.onnx_file
     model = load_ModelProto(onnx_path)
-    model = onnx.shape_inference.infer_shapes(model)
-    onnx.checker.check_model(model)
+    # model = onnx.shape_inference.infer_shapes(model)
+    # onnx.checker.check_model(model)
 
     # new_model = modify_output(model)
-    new_model = modify_node(model)
+    # new_model = modify_node(model)
+    new_model = modify_opset(model)
 
     save_ModelProto("res.onnx", new_model)
 
