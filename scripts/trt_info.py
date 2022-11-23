@@ -70,24 +70,33 @@ def get_engine_info(engine: trt.ICudaEngine) -> str:
     device_mem_size = input_device_mem_size + output_device_mem_size
 
     num_optimization_profiles = engine.num_optimization_profiles
+    num_inputs_per_profile = \
+            len([b for b in bindings if b.isInput]) // num_optimization_profiles
+
     profiles = []
-    for profile_idx in range(num_optimization_profiles):
-        profile = dict()
-        for binding in bindings:
-            if binding.isInput:
-                binding_name = binding.name
-                min_shape, opt_shape, max_shape = engine.get_profile_shape(profile_idx, binding_name)
-                profile[binding_name] = Profile(
+    profile_idx = 0
+    input_count = 0
+    profile = dict()
+    for binding in bindings:
+        if binding.isInput:
+            binding_name = binding.name
+            min_shape, opt_shape, max_shape = engine.get_profile_shape(profile_idx, binding_name)
+            profile[binding_name] = Profile(
                     profile_idx,
                     binding_name,
                     min_shape,
                     opt_shape,
                     max_shape
-                )
-        profiles.append(profile)
+            )
+            input_count += 1
+        if input_count == num_inputs_per_profile:
+            profiles.append(profile)
+            input_count = 0
+            profile_idx += 1
+            profile = dict()
 
     ret_str = ""
-    ret_str += f"{name}\n"
+    ret_str += f"Model name: {name}\n"
     ret_str += f"Number of bindings: {num_bindings}\n"
     for idx, b in enumerate(bindings):
         ret_str += f"    #{idx} {b}\n"
