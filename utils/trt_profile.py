@@ -42,7 +42,7 @@ def get_cuda_mem_nbytes(binding: Binding) -> int:
     return max_nbytes
 
 
-def isDynamic(shape: Tuple[int]) -> bool:
+def isShapeDynamic(shape: Tuple[int]) -> bool:
     dynamic = [d == -1 for d in shape]
     return any(dynamic)
 
@@ -62,12 +62,27 @@ def infer_output_max_shape(profile: Profile, engine: trt.ICudaEngine):
         context.set_optimization_profile_async(profile_idx, stream.handle)
         stream.synchronize()
 
+        # min_shape
+        for binding in profile.inputs:
+            context.set_binding_shape(binding.idx, binding.min_shape)
+
+        for binding in profile.outputs:
+            binding.min_shape = context.get_binding_shape(binding.idx)
+
+        # opt_shape
+        for binding in profile.inputs:
+            context.set_binding_shape(binding.idx, binding.opt_shape)
+
+        for binding in profile.outputs:
+            binding.opt_shape = context.get_binding_shape(binding.idx)
+
+        # max_shape
         for binding in profile.inputs:
             context.set_binding_shape(binding.idx, binding.max_shape)
-        assert context.all_shape_inputs_specified
 
         for binding in profile.outputs:
             binding.max_shape = context.get_binding_shape(binding.idx)
+
     finally:
         del stream
         del context
@@ -105,7 +120,7 @@ def get_profiles(engine: trt.ICudaEngine) -> List[Profile]:
                 opt_shape=opt_shape,
                 max_shape=max_shape,
                 isInput=isInput,
-                isDynamic=isDynamic(shape)
+                isDynamic=isShapeDynamic(shape)
         )
 
         if isInput:

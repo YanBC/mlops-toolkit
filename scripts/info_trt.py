@@ -9,6 +9,7 @@ def is_dynamic_profile(profile: Profile) -> bool:
 
 def get_engine_info(engine_path: str) -> str:
     profiles = query_profiles(engine_path)
+    dynamic_profile = [is_dynamic_profile(p) for p in profiles]
     engine = load_engine(engine_path)
     name = engine.name
 
@@ -33,9 +34,12 @@ def get_engine_info(engine_path: str) -> str:
 
     ret_str += f"Number of optimization profiles: {len(profiles)}\n"
     for idx, p in enumerate(profiles):
-        ret_str += f"    profile #{idx}, is_dynamic: {is_dynamic_profile(p)}\n"
+        ret_str += f"    profile #{idx}, is_dynamic: {dynamic_profile[idx]}\n"
         for input_binding in p.inputs:
             ret_str += f"        {input_binding}\n"
+        for output_binding in p.outputs:
+            ret_str += f"        {output_binding}\n"
+
     return ret_str
 
 
