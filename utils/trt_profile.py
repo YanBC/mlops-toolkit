@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import numpy as np
 from typing import List, Tuple
 import tensorrt as trt
 import pycuda.driver as cuda
@@ -30,9 +31,13 @@ class Binding:
     isInput: bool
     isDynamic: bool
 
+    @property
+    def np_dtype(self) -> np.dtype:
+        return trt.nptype(self.dtype)
+
 
 def get_nbytes(shape: Tuple[int], dtype: trt.DataType) -> int:
-    size = abs(trt.Volume(shape))
+    size = abs(trt.volume(shape))
     nbytes = size * dtype.itemsize
     return nbytes
 
@@ -42,7 +47,7 @@ def get_cuda_mem_nbytes(binding: Binding) -> int:
     return max_nbytes
 
 
-def isShapeDynamic(shape: Tuple[int]) -> bool:
+def is_shape_dynamic(shape: Tuple[int]) -> bool:
     dynamic = [d == -1 for d in shape]
     return any(dynamic)
 
@@ -53,8 +58,12 @@ class Profile:
     inputs: List[Binding]
     outputs: List[Binding]
 
+    def is_dynamic(self) -> bool:
+        input_dynamic = [b.isDynamic for b in self.inputs]
+        return any(input_dynamic)
 
-def infer_output_max_shape(profile: Profile, engine: trt.ICudaEngine):
+
+def infer_output_shape(profile: Profile, engine: trt.ICudaEngine):
     profile_idx = profile.idx
     context = engine.create_execution_context()
     stream = cuda.Stream()
@@ -120,7 +129,7 @@ def get_profiles(engine: trt.ICudaEngine) -> List[Profile]:
                 opt_shape=opt_shape,
                 max_shape=max_shape,
                 isInput=isInput,
-                isDynamic=isShapeDynamic(shape)
+                isDynamic=is_shape_dynamic(shape)
         )
 
         if isInput:
@@ -143,7 +152,7 @@ def get_profiles(engine: trt.ICudaEngine) -> List[Profile]:
             output_bindings = []
 
     for profile in ret_profiles:
-        infer_output_max_shape(profile, engine)
+        infer_output_shape(profile, engine)
     return ret_profiles
 
 

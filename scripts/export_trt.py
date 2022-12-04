@@ -12,22 +12,16 @@ _WORKSPACE = 8<<30
 # !!! require manual setting for now
 _PROFILES = [
     {
-        "input": ((1, 3, 512, 512), (1, 3, 512, 512), (9, 3, 512, 512))
+        "X": [(1, 3, 32, 32), (1, 3, 32, 32), (1, 3, 32, 32)],              # static
     },
     {
-        "input": ((1, 3, 512, 384), (1, 3, 512, 384), (9, 3, 512, 384))
+        "X": [(1, 3, 64, 64), (2, 3, 64, 64), (4, 3, 64, 64)],              # dynamic batch size
     },
     {
-        "input": ((1, 3, 384, 512), (1, 3, 384, 512), (9, 3, 384, 512))
+        "X": [(1, 3, 32, 32), (1, 3, 64, 64), (1, 3, 128, 128)],            # dynamic height and width
     },
     {
-        "input": ((1, 3, 512, 320), (1, 3, 512, 320), (9, 3, 512, 320))
-    },
-    {
-        "input": ((1, 3, 320, 512), (1, 3, 320, 512), (9, 3, 320, 512))
-    },
-    {
-        "input": [(1, 3, 256, 256), (1, 3, 512, 512), (1, 3, 704, 704)],
+        "X": [(1, 3, 32, 32), (2, 3, 64, 64), (4, 3, 128, 128)],            # dynamic batch size, height, and width
     }
 ]
 
@@ -122,7 +116,6 @@ def parse_TensorShapeProto(shape: onnx.onnx_ml_pb2.TensorShapeProto) -> Tuple[in
 def get_args():
     p = argparse.ArgumentParser()
     p.add_argument("onnxpath", help="Path to onnx model file")
-    # p.add_argument("--batchsize", type=int, default=1, help="Batch size. Defualt to 1.")
     p.add_argument("--enginepath", default="res.engine", help="Where to save tensorrt engine file. Default to res.engine")
     return p.parse_args()
 

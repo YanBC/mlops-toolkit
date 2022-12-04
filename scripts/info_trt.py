@@ -1,15 +1,10 @@
 import argparse
-from utils.trt_profile import query_profiles, load_engine, Profile
-
-
-def is_dynamic_profile(profile: Profile) -> bool:
-    input_dynamic = [b.isDynamic for b in profile.inputs]
-    return any(input_dynamic)
+from utils.trt_profile import query_profiles, load_engine
 
 
 def get_engine_info(engine_path: str) -> str:
     profiles = query_profiles(engine_path)
-    dynamic_profile = [is_dynamic_profile(p) for p in profiles]
+    dynamic_profile = [p.is_dynamic() for p in profiles]
     engine = load_engine(engine_path)
     name = engine.name
 
