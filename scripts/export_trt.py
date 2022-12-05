@@ -9,19 +9,26 @@ import onnx
 # meta
 ##############
 _WORKSPACE = 8<<30
+_USE_FP16 = False
+_TRT_LOG_LEVEL = trt.Logger.VERBOSE
 # !!! require manual setting for now
+# _PROFILES = [
+#     {
+#         "X": [(1, 3, 32, 32), (1, 3, 32, 32), (1, 3, 32, 32)],              # static
+#     },
+#     {
+#         "X": [(1, 3, 64, 64), (2, 3, 64, 64), (4, 3, 64, 64)],              # dynamic batch size
+#     },
+#     {
+#         "X": [(1, 3, 32, 32), (1, 3, 64, 64), (1, 3, 128, 128)],            # dynamic height and width
+#     },
+#     {
+#         "X": [(1, 3, 32, 32), (2, 3, 64, 64), (4, 3, 128, 128)],            # dynamic batch size, height, and width
+#     }
+# ]
 _PROFILES = [
     {
-        "X": [(1, 3, 32, 32), (1, 3, 32, 32), (1, 3, 32, 32)],              # static
-    },
-    {
-        "X": [(1, 3, 64, 64), (2, 3, 64, 64), (4, 3, 64, 64)],              # dynamic batch size
-    },
-    {
-        "X": [(1, 3, 32, 32), (1, 3, 64, 64), (1, 3, 128, 128)],            # dynamic height and width
-    },
-    {
-        "X": [(1, 3, 32, 32), (2, 3, 64, 64), (4, 3, 128, 128)],            # dynamic batch size, height, and width
+        "input_ids": [(1, 1), (1, 16), (1, 128)],
     }
 ]
 
@@ -36,7 +43,7 @@ def build_engine(onnx_file_path,
                 use_fp16=True,
                 workspace_size=_WORKSPACE
     ):
-    trt_logger = trt.Logger(trt.Logger.VERBOSE)
+    trt_logger = trt.Logger(_TRT_LOG_LEVEL)
     builder = trt.Builder(trt_logger)
 
     # create network
@@ -136,5 +143,5 @@ if __name__ == "__main__":
         engine_path,
         model_name,
         optimization_profiles=profiles,
-        use_fp16=True
+        use_fp16=_USE_FP16,
     )
