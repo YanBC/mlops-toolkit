@@ -22,7 +22,15 @@ def load_ModelProto(path: str) -> onnx.ModelProto:
 
 
 def save_ModelProto(path: str, model: onnx.ModelProto) -> None:
-    onnx.save(model, path)
+    try:
+        onnx.save(model, path)
+    except ValueError:
+        # ValueError: Message onnx.ModelProto exceeds maximum protobuf size of 2GB: 3773054338
+        onnx.save(model, path,
+            save_as_external_data=True,
+            all_tensors_to_one_file=False,
+            convert_attribute=True,
+        )
 
 
 def prune_ModelProto(model: onnx.ModelProto) -> onnx.ModelProto:
@@ -43,8 +51,11 @@ def create_model(name, nodes, inputs, outputs, initializers, opset_num) -> onnx.
     new_model.opset_import[0].version = opset_num
 
     new_model = prune_ModelProto(new_model)
-    new_model = onnx.shape_inference.infer_shapes(new_model)
-    onnx.checker.check_model(new_model)
+    try:
+        new_model = onnx.shape_inference.infer_shapes(new_model)
+        onnx.checker.check_model(new_model)
+    except ValueError as ve:
+        print(ve)
     return new_model
 
 
@@ -106,7 +117,7 @@ def modify_opset(model: onnx.ModelProto) -> onnx.ModelProto:
     initializers = graph.initializer
     inputVIs = graph.input
     outputVIs = graph.output
-    opset = 11
+    opset = 13
 
     new_model = create_model(name, nodes, inputVIs, outputVIs, initializers, opset)
     return new_model
