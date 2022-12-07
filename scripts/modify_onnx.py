@@ -87,6 +87,30 @@ def modify_output(model: onnx.ModelProto) -> onnx.ModelProto:
     return new_model
 
 
+def modify_input(model: onnx.ModelProto) -> onnx.ModelProto:
+    graph = model.graph
+    opset = model.opset_import[0].version
+    name = graph.name
+    inputVIs = graph.input
+    outputVIs = graph.output
+    nodes = graph.node
+    initializers = graph.initializer
+
+    extra_dim = onnx.TensorShapeProto.Dimension()
+    extra_dim.dim_value = 1
+
+    vi_t = inputVIs[2]
+    vi_index = inputVIs[3]
+    vi_scale = inputVIs[4]
+
+    vi_t.type.tensor_type.shape.dim.append(extra_dim)
+    vi_index.type.tensor_type.shape.dim.append(extra_dim)
+    vi_scale.type.tensor_type.shape.dim.append(extra_dim)
+
+    new_model = create_model(name, nodes, inputVIs, outputVIs, initializers, opset)
+    return new_model
+
+
 def modify_node(model: onnx.ModelProto) -> onnx.ModelProto:
     '''
     replace any node input "onnx::Resize_1938" -> "onnx::Resize_1937"
@@ -139,6 +163,7 @@ if __name__ == "__main__":
     # new_model = modify_output(model)
     # new_model = modify_node(model)
     new_model = modify_opset(model)
+    # new_model = modify_input(model)
 
     save_ModelProto("res.onnx", new_model)
 
