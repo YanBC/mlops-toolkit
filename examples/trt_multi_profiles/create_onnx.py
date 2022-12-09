@@ -43,7 +43,8 @@ def main() -> None:
     conv1_in_channels = 3
     conv1_out_channels = 32
     conv1_kernel_shape = (3, 3)
-    conv1_pads = (1, 1, 1, 1)
+    # conv1_pads = (1, 1, 1, 1)
+    conv1_pads = (0, 0, 0, 0)
     conv1_W = np.ones(shape=(conv1_out_channels, conv1_in_channels,
                              *conv1_kernel_shape)).astype(np.float32)
     conv1_B = np.ones(shape=(conv1_out_channels)).astype(np.float32)
